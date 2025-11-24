@@ -1,0 +1,161 @@
+---
+description: 
+globs: 
+---
+
+一、系统架构设计
+
+技术栈
+
+前端：Vue3 + Vant4 + Pinia + Vue Router + Axios
+
+后端：Koa2 + Koa-router + JWT + Sequelize（MySQL） + Socket.io
+
+架构图
+
+[客户端] ↔ WebSocket/HTTP ↔ [API网关]
+                                  ↓
+[用户服务] [房间服务] [游戏服务] ↔ [MySQL]
+二、数据库设计（MySQL）
+
+用户表（users）
+
+sql
+id INT PK
+username VARCHAR(32) UNIQUE
+password_hash VARCHAR(255)
+created_at DATETIME
+房间表（rooms）
+
+sql
+id INT PK
+code VARCHAR(6) UNIQUE  -- 房间码（例：A1B2C3）
+creator_id INT FK(users.id)
+max_players INT DEFAULT 3
+status ENUM('waiting', 'playing', 'ended')
+created_at DATETIME
+玩家关联表（room_players）
+
+sql
+id INT PK
+room_id INT FK(rooms.id)
+user_id INT FK(users.id)
+score INT DEFAULT 0
+joined_at DATETIME
+积分记录表（score_logs）
+
+sql
+id INT PK
+room_id INT FK(rooms.id)
+from_user INT FK(users.id)  -- 操作者
+to_user INT FK(users.id)    -- 得分者
+points INT
+created_at DATETIME
+三、后端接口设计（RESTful API）
+
+认证相关
+
+POST /api/register 用户注册
+
+POST /api/login 用户登录
+
+GET /api/user 获取当前用户信息
+
+房间相关
+
+POST /api/rooms 创建房间
+
+POST /api/rooms/join 加入房间
+
+GET /api/rooms/:code 获取房间信息
+
+POST /api/rooms/start 开始游戏
+
+游戏相关
+
+POST /api/game/add-score 添加分数
+
+POST /api/game/end 结束游戏
+
+GET /api/game/logs 获取游戏日志
+
+GET /api/game/rank 获取排行榜
+
+四、WebSocket事件设计（Socket.io）
+
+房间事件
+
+room_joined 新成员加入
+
+room_left 成员离开
+
+game_started 游戏开始
+
+游戏事件
+
+score_updated 分数更新
+
+new_log 新日志
+
+game_ended 游戏结束
+
+五、前端关键组件设计
+
+页面结构
+
+views/
+|- Auth/
+|- Login.vue
+|- Register.vue
+|- Room/
+|- CreateRoom.vue
+|- RoomLobby.vue
+|- GameScreen.vue
+|- Ranking.vue
+
+核心组件
+
+ScorePanel.vue 计分面板
+
+PublicLog.vue 公屏日志
+
+PlayerCard.vue 玩家信息卡片
+
+ScoreInputDialog.vue 分数输入弹窗
+
+
+七、安全设计
+
+JWT认证
+
+使用httpOnly cookie存储token
+
+设置30分钟过期时间
+
+每次请求验证用户状态
+
+房间操作验证
+
+用户必须加入房间后才能操作
+
+每个房间请求验证用户是否属于该房间
+
+游戏结束后禁止分数修改
+
+八、性能优化
+
+前端
+
+使用Virtual List渲染长日志列表
+
+WebSocket连接复用
+
+本地缓存房间数据
+
+后端
+
+Redis缓存热点房间数据
+
+MySQL读写分离
+
+使用数据库连接池
